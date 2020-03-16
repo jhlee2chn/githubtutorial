@@ -1,0 +1,394 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+    <head>
+        <title>경사하강법(Gradient Descent Algorithm) -- Sage</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        
+        
+	
+        <script type="text/javascript" src="/javascript/jquery/jquery-1.3.2.min.js"></script>
+        
+
+
+
+<script type="text/javascript">user_name= "zaihe";</script>
+
+<script  type="text/javascript">
+    worksheet_filename = "pub/2615";
+    worksheet_name = '\ud2b9\uc774\uac12 \ubd84\ud574(Singular Value Decomposition, SVD)';
+    server_ping_while_alive();
+</script>
+
+
+
+        
+        
+        
+
+    </head>
+    <body id="guest-worksheet-page"
+          class="">
+        
+</body>
+<head>
+<script>
+function doSaveAs(){
+    if (document.execCommand){
+        document.execCommand("SaveAs")
+    }
+    else {
+        alert("IE 5.0 이상에서만 가능합니다!")
+    }
+}
+</script>
+
+
+<script type="text/javascript">
+var now_computing = 0;
+var facebooklink = "http://www.facebook.com/share.php?u="+parent.location.href;
+</script>
+</head>
+<body>
+
+<br><p><font color="blue" size=6>경사하강법(Gradient Descent Algorithm)</font></p><br>
+
+
+
+
+
+
+</body>
+<head>
+<meta name="viewport" content="user-scalable=yes, initial-scale=device-height, maximum-scale=2.0, munimum-scale=0.1, width=device-height" />
+<link rel="icon" href="http://mathlab.knou.ac.kr:8080/static/favicon.ico">
+<link rel="stylesheet" href="http://mathlab.knou.ac.kr:8080/static/root.css">
+<script src="http://mathlab.knou.ac.kr:8080/static/jquery.min.js"></script>
+<script src="http://mathlab.knou.ac.kr:8080/embedded_sagecell.js"></script>
+<script>
+$(function() {
+    sagecell.makeSinglecell({
+      inputLocation: '.cell_input_print', linked: true, languages: sagecell.allLanguages, hide: ['computationID', 'messages', 'sessionTitle', 'done', 'sessionFilesTitle', 'sessionFiles', 'files', 'sageMode'], evalButtonText: '실행(Evaluate)'});});
+</script>
+
+
+
+
+</head>
+
+
+<body>
+
+
+
+
+
+
+
+<div class="cell_input_active" id="cell_resizer"></div>
+  
+    
+<span id="cell_outer_0">
+    
+    <div class="text_cell" id="cell_text_0">
+      <p><span style="color: #800080;"><strong>[References]</strong></span></p>
+<p><span style="color: #339966;"><strong>1.&nbsp;이상구 with 이재화, [빅북]&nbsp;인공지능을 위한 기초수학(Basic Mathematics for Artificial Intelligence),&nbsp;교보문고 POD,&nbsp;2019.</strong></span></p>
+<p>&nbsp; &nbsp;&nbsp;<a href="http://matrix.skku.ac.kr/math4ai/" target="_blank">http://matrix.skku.ac.kr/math4ai/</a></p>
+<p class="0">&nbsp;</p>
+<p><span style="color: #993366;"><strong>[Key point]</strong></span></p>
+<p><span style="color: #0000ff;"><strong>Gradient Descent Algorithm </strong><span style="color: #000000;">은</span></span> 어떤 모델에 대한 비용 (Cost) 을 최소화 시키는 알고리즘으로써,</p>
+<p><span style="text-decoration: underline;">머신러닝 및 딥러닝</span> 모델에서 사용되는 가중치의 최적해를 구할 때 널리 쓰이는 알고리즘이다.</p>
+<p>기본 개념은 함수의 기울기(경사)를 구하여 기울기가 낮은 쪽으로 계속 이동시켜서 극값에</p>
+<p>이를 때까지 반복시키는 것이다.&nbsp;</p>
+<p class="0">&nbsp;</p>
+<p><strong><span style="font-family: 'comic sans ms', sans-serif;">최적화 문제의 수치적인 방법(Numerical Method for Optimization -- Line Search Type)</span></strong></p>
+<p>&bull; 먼저 제약조건이 없는 최적화 (unconstrained optimization) 문제</p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; $\min_{{\bf x} \in \mathbb{R}^n} f({\bf x}) $&nbsp;</p>
+<p>를 푸는 수치적인 방법 (numerical method) 에 대하여 살펴보자.</p>
+<p class="0">&nbsp;</p>
+<p><strong><span style="color: #800080;">[Fermat의 임계점 정리]</span></strong>에 의해 위 문제의 <strong><span style="color: #000000;">최적해 (optimal solution)</span></strong> ${\bf x}^*$ 는 다음을 만족한다.</p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #0000ff;">$\nabla f({\bf x}^*) = {\bf 0}$</span></p>
+<p>&nbsp;따라서 2.4절에서 배운 바와 같이 방정식&nbsp;$\nabla f({\bf x}) = {\bf 0}$ 을 풀어서 나온 해들이 최적해가 되는지</p>
+<p>판단하면 된다.</p>
+<p class="0">&nbsp;</p>
+<p>&bull; 그러나,&nbsp;<span style="text-decoration: underline;">함수 $f$ 가 비선형인 경우는 방정식을 풀어서 임계점을 구하는 것조차도 쉽지 않다.</span></p>
+<p>이런 경우에는 수치적인 방법으로 <span style="text-decoration: underline;">임계점을 구한다.</span> 최적화 문제를 푸는 계산 방법은 대개</p>
+<p><span style="color: #0000ff;"><strong>반복법 (iterative method)</strong></span> 으로, 초기 근사해 ${\bf x}_1$ 으로 부터 시작하여 <span style="text-decoration: underline;">특정한 반복단계를 거쳐</span></p>
+<p>이전보다 나은 근사해&nbsp;${\bf x}_2$,&nbsp;${\bf x}_3$, ...&nbsp; 를 생성한다. 목표는 $k$번째 근사해&nbsp;${\bf x}_k$ 또는 극한값 $({\bf x}_k \rightarrow ) \,{\bf x}^*$</p>
+<p>에서&nbsp;$\nabla f({\bf x}) = {\bf 0}$ 을 만족하도록 하는 것이다.</p>
+<p class="0">&nbsp;</p>
+<p>&bull; $k$번째 반복단계는 보통 다음과 같은 (직선의 벡터방정식) 형식으로 구성된다.</p>
+<p><span style="color: #0000ff;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ${\bf x}_{k+1} = {\bf x}_k + \alpha_k {\bf d}_k$</span></p>
+<p>여기서 ${\bf d}_k$ 는 탐색방향(search direction), $\alpha_k$ 는 step-size (머신러닝에서는 이를 learning rate)</p>
+<p>라 한다. <span style="text-decoration: underline;">즉 ${\bf x}_k$ 상에서&nbsp;${\bf d}_k$ 방향으로&nbsp;$\alpha_k$ 만큼 이동하여&nbsp;${\bf x}_{k+1}$ 을 생성한다.</span></p>
+<p class="0">&nbsp;</p>
+<p>&bull; <span style="color: #0000ff;">보통 ${\bf d}_k$ 는 함숫값이 감소하는 방향으로 정한다.</span> 즉 다음을 만족한다.</p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; $D_{{\bf d}_k} f({\bf x}_k ) = \nabla f({\bf x}_k ) \cdot {\bf d}_k = {\bf d}_k ^T \nabla f({\bf x}_k ) &lt;0 $</p>
+<p>이러한 ${\bf d}_k$ 는 특히 하강방향 (descent direction) 이라고도 한다.&nbsp; ${\bf d}_k$ 방향을 따라 움직이면, 함수</p>
+<p>$f$ 가 감소한다는 보장이 있으므로 step-size $\alpha_k &gt;0$ 는 $f({\bf x}_k ) &gt; f({\bf x}_{k+1} )$ 이 만족되도록 정한다.</p>
+<p class="0">&nbsp;</p>
+<p>&bull; step-size $\alpha_k$ 를 택하는 방법은 대개 다음 두 가지로 나눌 수 있다.</p>
+<p class="0">① 반직선&nbsp;<span>${\bf x} = {\bf x}_k + \alpha {\bf d}_k$&nbsp; $(\alpha \ge 0)$ 상에서 함수 $f$ 의 값이 가장 작게 되는&nbsp;$\alpha_k$ 를 찾는다.</span></p>
+<p class="0"><span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; $f({\bf x}_k + \alpha_k {\bf d}_k ) = \min _{\alpha &gt; 0} f({\bf x}_k + \alpha {\bf d}_k )$</span></p>
+<p class="0">이 방법을 <span style="color: #0000ff;"><strong>exact line search</strong></span> 라 하고, 이때의 $\alpha_k$ 를 <strong><span style="color: #0000ff;">optimal step-size</span></strong> 라 한다. 대개는</p>
+<p class="0">cost 가 많이 들어서 잘 사용하지 않는다.</p>
+<p class="0">② 만일&nbsp;$\min _{\alpha &gt; 0} f({\bf x}_k + \alpha {\bf d}_k )$ 을 정확하게 풀지는 않지만 <span style="text-decoration: underline;">"함숫값이 충분히 감소한다"는 것을</span></p>
+<p class="0"><span style="text-decoration: underline;">보장하는 $\alpha_k$ 를 선택하는 방법이 있다면</span>, exact line search 를 피하여 cost 를 상당히 줄일 수 있다.</p>
+<p class="0">이를 <span style="color: #0000ff;"><strong>inexact line search</strong></span> 라 한다. 즉, <span style="text-decoration: underline;">다음 조건을 만족하는&nbsp;$\alpha_k$ 를 찾는다.</span></p>
+<p class="0">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #0000ff;">$f({\bf x}_k + \alpha {\bf d}_k ) \le f({\bf x}_k ) + c_1 \alpha {\bf d}_k ^T \nabla f({\bf x}_k )$</span></p>
+<p class="0"><span style="color: #339966;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ${\bf d}_k ^T \nabla f({\bf x}_k + \alpha {\bf d}_k ) \ge c_2 {\bf d}_k ^T \nabla f({\bf x}_k )$</span></p>
+<p class="0">여기서 $0&lt;c_1 &lt; c_2 &lt; 1$ 이다. 이를 그림으로 표현하면 다음과 같다.</p>
+<p class="0">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<img style="vertical-align: middle;" src="http://matrix.skku.ac.kr/math4ai/part2/PICC0AC.png" alt="" width="400" height="296" /></p>
+<p class="0">따라서 위의 두 부등식을 만족하는 $\alpha_k$ 는 폐구간 $[a, \,b]$ 에서 택하면 된다.</p>
+<p class="0">&nbsp;</p>
+<p class="0">[참고] $\alpha_k$ 가 만족해야 하는 조건은 여러가지가 있으나, 위의 두 부등식이 주로 쓰인다.</p>
+<p class="0">이를 Wolfe condition 이라 하고, 그 중 첫번째 부등식을 Armijo condition 이라 한다.</p>
+<p class="0">그리고 위의 조건을 만족하는 $\alpha_k$ 를 실제로 찾아내는 알고리즘은 Backtracking line search 등</p>
+<p class="0">이 있으나 자세한 내용은 본 웹 페이지 맨 아래의 최적화(Optimization) 관련 도서를 참고하라.</p>
+<p class="0">&nbsp;</p>
+<p><span style="font-family: 'comic sans ms', sans-serif;"><strong>경사하강법 (Gradient Descent Algorithm)</strong></span></p>
+
+<p>&bull; 경사하강법은 탐색방향을 ${\bf d}_k = -\nabla f({\bf x}_k )$ 로 택하는 경우이다. 앞서 살펴본 바와 같이&nbsp; 음의</p>
+<p>그래디언트 $-\nabla f({\bf x}_k )$ 방향이 점 ${\bf x}_k$ 에서 $f$ 가 가장 가파르게 하강하는 방향이므로, 경사하강법</p>
+<p>의 아이디어가 쉽게 이해된다. (스키장에서 가장 빠르게 하강하는 길을 찾는 알고리즘의 아이디어</p>
+<p>와 일치한다.)&nbsp; 다음은 경사하강법의 알고리즘이다.</p>
+<p class="0">&nbsp;</p>
+<p><span style="color: #0000ff;">[경사하강법]&nbsp;</span></p>
+<p>[단계 1]&nbsp; 초기 근사해 ${\bf x}_1 \in \mathbb{R}^n$ 와 허용오차(tolerance) $0\le \epsilon \ll 1$ 을 준다. $k:=1$ 이라 한다.</p>
+<p>[단계 2]&nbsp;&nbsp;${\bf d}_k = -\nabla f({\bf x}_k )$ 를 계산한다. 만일&nbsp;$\| {\bf d}_k \|&nbsp; \le \epsilon$ 이면, 알고리즘을 멈춘다.</p>
+<p><span style="color: #0000ff;">[단계 3]&nbsp; line search 를 수행하여 적절한 step-size $\alpha_k &gt; 0$ 를 구한다.</span></p>
+<p>[단계 4]&nbsp;&nbsp;<span>${\bf x}_{k+1} = {\bf x}_k + \alpha_k {\bf d}_k $,&nbsp; $k:=k+1$ 라 두고 [단계 2]로 이동한다.</span></p>
+<p class="0">&nbsp;</p>
+<p>&bull; 다음은 주어진 함수에 경사하강법을 적용한 예시이다. 허용오차는 $\epsilon = 10^{-8}$ 으로 주었다.</p>
+
+<p>[출처]&nbsp; J. BARZILAI and J. M. BORWEIN,&nbsp;<span style="font-family: 'comic sans ms', sans-serif;">Two-Point Step Size Gradient Methods</span>,&nbsp;<em>IMA J. Numer. Anal.</em>&nbsp;(1988) 8 (1): 141-148.</p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; $\min_{{\bf x} \in \mathbb{R}^4} f({\bf x} )=\frac{1}{2} {\bf x}^T A&nbsp;{\bf x}&nbsp;&nbsp;- {\bf b}^T {\bf x}&nbsp;$,&nbsp; $A=\textrm{diag}(20, 10, 2, 1)$,&nbsp; ${\bf b}=(1, 1, 1, 1)$.</p>
+
+<p><span style="color: #0000ff;">여기서 $\nabla f({\bf x} ) = A{\bf x} - {\bf b}$ 이고, $f({\bf x})$ 는 Hessian $A$ 가 양의 정부호 (positive definite) 인</span></p>
+<p><span style="color: #0000ff;">이차함수이므로 exact line search 를 수행하면, $\alpha_k$ 는 다음과 같이 closed-form 으로 나온다.</span></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;$\alpha_k = \frac{\nabla f({\bf x}_k )^T \nabla f({\bf x}_k )}{\nabla f({\bf x}_k )^T A \nabla f({\bf x}_k )}$</p>
+    </div>
+
+
+
+</span>
+  
+    
+
+    
+    
+
+
+
+
+<div id="cell_outer_2" class="cell_visible">
+    <div id="cell_2" class="cell_evaluated">
+
+        
+        
+        
+            
+                
+            
+            
+                <div class="cell_input_print"># initializing
+tol = 10^(-8)  # tolerance
+A = diagonal_matrix(RR, [20, 10, 2, 1])
+b = vector(RR, [1, 1, 1, 1])  # objective function
+x0 = vector(RR, [0, 0, 0, 0])  # initial guess
+g0 = -b  # initial gradient
+r = []  # 그래프를 그리기 위한 용도
+
+# main iteration
+for i in range(0, 200):
+    gn = g0.norm()
+    r.append((i, gn))
+    if gn &lt; tol:
+        print &#34;Stationary point! Algorithm terminated!&#34;
+        break
+        
+    w = A*g0
+    a = g0.inner_product(g0)/(g0.inner_product(w))  # step-size
+    x1 = x0 - a*g0
+    g1 = A*x1 - b
+    x0 = x1;g0 = g1
+
+# gradient 의 norm을 그래프로 그림    
+show(line2d(r) + point(r, color = &#39;red&#39;))&nbsp;</div>
+            
+            
+
+            <div id="introspect_div_2" class="introspection"></div>
+        
+
+
+
+    </div>
+</div>
+
+  
+    
+<span id="cell_outer_3">
+    
+    <div class="text_cell" id="cell_text_3">
+      <p>위의 그래프에서 $\| \nabla f({\bf x}_k ) \|$ 이 점차 $0$에 수렴함을 쉽게 확인할 수 있다.</p>
+<p class="0">&nbsp;</p>
+<p><span style="color: #800080;"><strong>[주의!]</strong></span>&nbsp; 경사하강법은 zigzag 현상이 발생하여 해의 근처에서 수렴 속도가 많이 늦어질 수 있는 단점이 있다.&nbsp;아래 예시를 보자.</p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;$\min_{{\bf x} \in \mathbb{R}^2} f({\bf x} )=\frac{1}{2} {\bf x}^T A&nbsp;{\bf x}&nbsp;&nbsp;- {\bf b}^T {\bf x}&nbsp;$,&nbsp; $A=\textrm{diag}(0.1, 10)$,&nbsp; ${\bf b}=(1, 1)$.</p>
+    </div>
+
+
+
+</span>
+  
+    
+
+    
+    
+
+
+
+
+<div id="cell_outer_9" class="cell_visible">
+    <div id="cell_9" class="cell_evaluated">
+
+        
+        
+        
+            
+                
+            
+            
+                <div class="cell_input_print"># initializing
+tol = 10^(-6)  # tolerance
+A = diagonal_matrix(RR, [0.1, 1])
+b = vector(RR, [1, 1])  # objective function
+x0 = vector(RR, [0, 0])  # initial guess
+g0 = -b  # initial gradient
+r = []  # 그래프를 그리기 위한 용도
+
+# main iteration
+for i in range(0, 200):
+    gn = g0.norm()
+    r.append(x0)
+    if gn &lt; tol:
+        print &#34;Stationary point! Algorithm terminated!&#34;
+        print &#34;||g(x_k)|| =&#34;, gn
+        break
+        
+    w = A*g0
+    a = g0.inner_product(g0)/(g0.inner_product(w))  # step-size
+    x1 = x0 - a*g0
+    g1 = A*x1 - b
+    x0 = x1;g0 = g1&nbsp;</div>
+            
+            
+
+            <div id="introspect_div_9" class="introspection"></div>
+        
+
+        
+        
+               
+
+
+    </div>
+</div>
+
+  
+    
+
+<p class="0">&nbsp;</p>    
+    
+
+
+
+
+<div id="cell_outer_1" class="cell_visible">
+    <div id="cell_1" class="cell_evaluated">
+
+        
+        
+        
+            
+                
+            
+            
+                <div class="cell_input_print"># 함수의 level curve와 함께 그리기
+var(&#39;x, y&#39;)
+f = 0.05*x^2 + 0.5*y^2 - x - y
+p1 = contour_plot(f, (x, -1, 15), (y, -5, 5), contours=[-6, -5.5,..,0], cmap = &#39;hsv&#39;, fill = False)
+p2 = line2d(r) + point(r, color=&#39;black&#39;)
+show(p1 + p2, aspect_ratio=1)&nbsp;</div>
+            
+            
+
+            <div id="introspect_div_1" class="introspection"></div>
+        
+
+      
+
+
+    </div>
+</div>
+
+<p class="0">&nbsp;</p>  
+    
+<span id="cell_outer_4">
+    
+    <div class="text_cell" id="cell_text_4">
+      <p>&bull; 기타 자세한 사항은 아래의 최적화(Optimization) 관련 도서를 참고하라.</p>
+<p>[1] S. Boyd and L. Vandenberghe, Convex Optimization, Cambridge University Press, 2004.&nbsp;&nbsp;<a href="http://stanford.edu/~boyd/cvxbook/" target="_blank">http://stanford.edu/~boyd/cvxbook/</a></p>
+<p>[2] J. Nocedal and S. Wright, Numerical Optimization, 2nd ed., Springer, 2006.</p>
+<p>[3] R. Fletcher, Practical Methods of Optimization, 2nd ed., John Wiley and Sons,&nbsp;1987.</p>
+<p>[4] J. Dennis and R. Schnabel, Numerical Methods for Unconstrained Optimization&nbsp;and Nonlinear Equations, SIAM, 1987.</p>
+
+<p>&nbsp;</p>
+<p><span style="color: #800080; font-weight: 700;">(아래 SageMathCell에 실습해보세요)</span></p>
+
+    </div>
+
+
+
+</span>
+  
+    
+
+<div id="cell_outer_12" class="cell_visible">
+    <div id="cell_12" class="cell_evaluated">
+
+        
+        
+        
+            
+                
+            
+            
+                <div class="cell_input_print"><script type="text/code"></script></div><br><br><br>
+            
+            
+
+            <div id="introspect_div_12" class="introspection"></div>
+        
+
+        
+        
+
+
+    </div>
+</div>
+
+  
+</div>
+
+
+
+&nbsp;
+&nbsp;
+
+<p><b>Copyright @ 2020 <a href="http://matrix.skku.ac.kr" target="blank">SKKU Matrix Lab</a>. All rights reserved.</b><br><b> Made by Manager: Prof. <a href="mailto:sglee@skku.edu">Sang-Gu Lee</a> and Dr. <a href="mailto:jhlee2chn@skku.edu">Jae Hwa Lee</a></b><br> 
+*This research was supported by Basic Science Research Program through the National Research Foundation of Korea (NRF) funded by the Ministry of Education (2017R1D1A1B03035865).</p> 
+
+<p><img src="signature.jpg" width="210px" hspace="15">   <img src="http://sagemath.org/pix/sage_logo_new_l_hc.png" width="200px"></p>
+
+    </body>
+</html>
